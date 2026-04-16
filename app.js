@@ -5,6 +5,30 @@ let animationId = null;
 let epoch = 0;
 let lossHistory = [];
 
+let trainPercent = 50;
+let trainData = [];
+let testData = [];
+
+const trainSplitSlider = document.getElementById("trainSplit");
+const trainSplitValue = document.getElementById("trainSplitValue");
+
+trainSplitSlider.addEventListener("input", () => {
+  trainPercent = parseInt(trainSplitSlider.value, 10);
+  trainSplitValue.textContent = `${trainPercent}%`;
+
+  stopTraining();
+  data = generateCircleData();
+  splitData(data, trainPercent);
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
+
+trainPercent = parseInt(trainSplitSlider.value, 10);
+trainSplitValue.textContent = `${trainPercent}%`;
+
 const lossCanvas = document.getElementById("lossPlot");
 const lossCtx = lossCanvas.getContext("2d");
 
@@ -33,7 +57,18 @@ function generateCircleData(n = 400, noise = 0.08) {
 const canvas = document.getElementById("plot");
 const ctx = canvas.getContext("2d");
 
+function splitData(points, trainPercent) {
+  const shuffled = [...points];
+  shuffle(shuffled);
+
+  const trainSize = Math.floor((trainPercent / 100) * shuffled.length);
+
+  trainData = shuffled.slice(0, trainSize);
+  testData = shuffled.slice(trainSize);
+}
+
 let data = generateCircleData();
+splitData(data, trainPercent);
 
 function toCanvasX(x) {
   return ((x + 1) / 2) * canvas.width;
@@ -43,7 +78,7 @@ function toCanvasY(y) {
   return canvas.height - ((y + 1) / 2) * canvas.height;
 }
 
-function drawPoints(points) {
+function drawTrainPoints(points) {
   for (const p of points) {
     ctx.beginPath();
     ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3, 0, Math.PI * 2);
@@ -52,7 +87,15 @@ function drawPoints(points) {
   }
 }
 
-drawPoints(data);
+function drawTestPoints(points) {
+  for (const p of points) {
+    ctx.beginPath();
+    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 4, 0, Math.PI * 2);
+    ctx.strokeStyle = p.label === 1 ? "orange" : "steelblue";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
 
 /* Neural Network 
     - Weights
@@ -160,7 +203,8 @@ function drawDecisionBoundary() {
 
 function render() {
   drawDecisionBoundary();
-  drawPoints(data);
+  drawTrainPoints(trainData);
+  drawTestPoints(testData);
   drawLoss();
 }
 
@@ -227,12 +271,16 @@ learningRate = parseFloat(lrSlider.value);
 hiddenSize = parseInt(hiddenSlider.value, 10);
 
 function updateStatus() {
-  const loss = computeLoss(data);
+  const trainLoss = computeLoss(trainData);
+  const testLoss = computeLoss(testData);
+
   statusEl.textContent =
-    `Learning Rate: ${learningRate.toFixed(3)} | ` +
+    `LR: ${learningRate.toFixed(3)} | ` +
     `Hidden: ${hiddenSize} | ` +
     `Epoch: ${epoch} | ` +
-    `Loss: ${loss.toFixed(4)}`;
+    `Train %: ${trainPercent} | ` +
+    `Train Loss: ${trainLoss.toFixed(4)} | ` +
+    `Test Loss: ${testLoss.toFixed(4)}`;
 }
 
 function shuffle(array) {
@@ -252,7 +300,7 @@ function trainEpoch(points, lr) {
 function trainingLoop() {
   if (!isTraining) return;
 
-  trainEpoch(data, learningRate);
+  trainEpoch(trainData, learningRate);
   epoch++;
 
   const loss = computeLoss(data);
@@ -311,6 +359,7 @@ trainBtn.addEventListener("click", () => {
 resetBtn.addEventListener("click", () => {
   stopTraining();
   data = generateCircleData();
+  splitData(data, trainPercent);
   initNetwork(hiddenSize);
   epoch = 0;
   lossHistory = [];
@@ -318,6 +367,8 @@ resetBtn.addEventListener("click", () => {
   updateStatus();
 });
 
+data = generateCircleData();
+splitData(data, trainPercent);
 initNetwork(hiddenSize);
 render();
 updateStatus();
