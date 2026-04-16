@@ -9,8 +9,14 @@ let trainPercent = 50;
 let trainData = [];
 let testData = [];
 
+let showTrainData = true;
+
 const trainSplitSlider = document.getElementById("trainSplit");
 const trainSplitValue = document.getElementById("trainSplitValue");
+
+const showTrainCheckbox = document.getElementById("showTrainData");
+
+showTrainData = showTrainCheckbox.checked;
 
 trainSplitSlider.addEventListener("input", () => {
   trainPercent = parseInt(trainSplitSlider.value, 10);
@@ -81,8 +87,8 @@ function toCanvasY(y) {
 function drawTrainPoints(points) {
   for (const p of points) {
     ctx.beginPath();
-    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3, 0, Math.PI * 2);
-    ctx.fillStyle = p.label === 1 ? "orange" : "steelblue";
+    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.label === 1 ? "#e9b87c" : "#71ace6";
     ctx.fill();
   }
 }
@@ -90,19 +96,11 @@ function drawTrainPoints(points) {
 function drawTestPoints(points) {
   for (const p of points) {
     ctx.beginPath();
-    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 4, 0, Math.PI * 2);
-    ctx.strokeStyle = p.label === 1 ? "orange" : "steelblue";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.label === 1 ? "#a66414" : "#144372";
+    ctx.fill();
   }
 }
-
-/* Neural Network 
-    - Weights
-    - Forward Pass
-    - Backprop
-    - Training Step
-*/
 
 let W1, b1, W2, b2;
 
@@ -203,7 +201,11 @@ function drawDecisionBoundary() {
 
 function render() {
   drawDecisionBoundary();
-  drawTrainPoints(trainData);
+
+  if (showTrainData) {
+    drawTrainPoints(trainData);
+  }
+
   drawTestPoints(testData);
   drawLoss();
 }
@@ -279,6 +281,7 @@ function updateStatus() {
     `Hidden: ${hiddenSize} | ` +
     `Epoch: ${epoch} | ` +
     `Train %: ${trainPercent} | ` +
+    `Train Visible: ${showTrainData ? "Yes" : "No"} | ` +
     `Train Loss: ${trainLoss.toFixed(4)} | ` +
     `Test Loss: ${testLoss.toFixed(4)}`;
 }
@@ -332,6 +335,11 @@ function stopTraining() {
     animationId = null;
   }
 }
+
+showTrainCheckbox.addEventListener("change", () => {
+  showTrainData = showTrainCheckbox.checked;
+  render();
+});
 
 lrSlider.addEventListener("input", () => {
   learningRate = parseFloat(lrSlider.value);

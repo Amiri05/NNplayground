@@ -37,6 +37,17 @@
       <canvas id="plot" width="500" height="500"></canvas>
       <canvas id="lossPlot" width="250" height="120"></canvas>
     </main>
+
+    <label>
+    <input type="checkbox" id="showTrainData" checked />
+    Show Training Data
+    </label>
+
+    <label>
+    Train %
+    <input type="range" id="trainSplit" min="10" max="90" step="5" value="50" />
+    </label>
+    <p id="trainSplitValue">50%</p>
   </div>
 
   <script src="app.js"></script>
