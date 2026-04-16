@@ -1,14 +1,27 @@
+let learningRate = 0.03;
+let hiddenSize = 4;
+let isTraining = false;
+let animationId = null;
+let epoch = 0;
+let lossHistory = [];
+
+const lossCanvas = document.getElementById("lossPlot");
+const lossCtx = lossCanvas.getContext("2d");
+
 // Dataset Generator
 
 // Circle Dataset
-function generateCircleData(n = 400) {
+function generateCircleData(n = 400, noise = 0.08) {
   const points = [];
 
   for (let i = 0; i < n; i++) {
-    const x = Math.random() * 2 - 1;
-    const y = Math.random() * 2 - 1;
-    const r = Math.sqrt(x * x + y * y);
+    let x = Math.random() * 2 - 1;
+    let y = Math.random() * 2 - 1;
 
+    x += (Math.random() * 2 - 1) * noise;
+    y += (Math.random() * 2 - 1) * noise;
+
+    const r = Math.sqrt(x * x + y * y);
     const label = r < 0.5 ? 1 : 0;
 
     points.push({ x, y, label });
@@ -99,19 +112,15 @@ function trainStep(sample, lr) {
   const y = sample.label;
 
   const { hidden, out } = forward(x1, x2);
-
   const dOut = out - y;
 
-  // Save old W2 before updating
   const oldW2 = [...W2];
 
-  // Update output layer
   for (let i = 0; i < W2.length; i++) {
     W2[i] -= lr * dOut * hidden[i];
   }
   b2 -= lr * dOut;
 
-  // Update hidden layer using OLD W2
   for (let i = 0; i < W1.length; i++) {
     const dHidden = dOut * oldW2[i] * dtanh(hidden[i]);
     W1[i][0] -= lr * dHidden * x1;
@@ -119,23 +128,6 @@ function trainStep(sample, lr) {
     b1[i] -= lr * dHidden;
   }
 }
-
-function trainEpoch(points, lr) {
-  for (const p of points) {
-    trainStep(p, lr);
-  }
-}
-
-document.getElementById("trainBtn").addEventListener("click", () => {
-  const lr = parseFloat(document.getElementById("lr").value);
-
-  for (let i = 0; i < 200; i++) {
-    trainEpoch(data, lr);
-  }
-
-  drawDecisionBoundary();
-  drawPoints(data);
-});
 
 function drawDecisionBoundary() {
   const image = ctx.createImageData(canvas.width, canvas.height);
@@ -169,17 +161,53 @@ function drawDecisionBoundary() {
 function render() {
   drawDecisionBoundary();
   drawPoints(data);
+  drawLoss();
 }
 
-document.getElementById("resetBtn").addEventListener("click", () => {
-  const hiddenSize = parseInt(document.getElementById("hidden").value, 10);
-  data = generateCircleData();
-  initNetwork(hiddenSize);
-  render();
-});
+function computeLoss(points) {
+  let totalLoss = 0;
 
-initNetwork(4);
-render();
+  for (const p of points) {
+    const { out } = forward(p.x, p.y);
+    const clipped = Math.min(Math.max(out, 1e-7), 1 - 1e-7);
+
+    totalLoss += -(
+      p.label * Math.log(clipped) +
+      (1 - p.label) * Math.log(1 - clipped)
+    );
+  }
+
+  return totalLoss / points.length;
+}
+
+function drawLoss() {
+  lossCtx.clearRect(0, 0, lossCanvas.width, lossCanvas.height);
+
+  if (lossHistory.length < 2) return;
+
+  const maxLoss = Math.max(...lossHistory);
+  const minLoss = Math.min(...lossHistory);
+
+  lossCtx.beginPath();
+
+  lossHistory.forEach((loss, i) => {
+    const x = (i / (lossHistory.length - 1)) * lossCanvas.width;
+
+    const y =
+      lossCanvas.height -
+      ((loss - minLoss) / (maxLoss - minLoss + 1e-6)) * lossCanvas.height;
+
+    if (i === 0) {
+      lossCtx.moveTo(x, y);
+    } else {
+      lossCtx.lineTo(x, y);
+    }
+  });
+
+  lossCtx.strokeStyle = "black";
+  lossCtx.lineWidth = 2;
+  lossCtx.stroke();
+}
 
 /* Renderer
     - Background Decision Boundary 
@@ -188,3 +216,108 @@ render();
 */
 
 // UI Controller
+
+const lrSlider = document.getElementById("lr");
+const hiddenSlider = document.getElementById("hidden");
+const trainBtn = document.getElementById("trainBtn");
+const resetBtn = document.getElementById("resetBtn");
+const statusEl = document.getElementById("status");
+
+learningRate = parseFloat(lrSlider.value);
+hiddenSize = parseInt(hiddenSlider.value, 10);
+
+function updateStatus() {
+  const loss = computeLoss(data);
+  statusEl.textContent =
+    `Learning Rate: ${learningRate.toFixed(3)} | ` +
+    `Hidden: ${hiddenSize} | ` +
+    `Epoch: ${epoch} | ` +
+    `Loss: ${loss.toFixed(4)}`;
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function trainEpoch(points, lr) {
+  shuffle(points);
+  for (const p of points) {
+    trainStep(p, lr);
+  }
+}
+
+function trainingLoop() {
+  if (!isTraining) return;
+
+  trainEpoch(data, learningRate);
+  epoch++;
+
+  const loss = computeLoss(data);
+  lossHistory.push(loss);
+
+  if (lossHistory.length > 200) {
+    lossHistory.shift();
+  }
+
+  render();
+  updateStatus();
+
+  animationId = requestAnimationFrame(trainingLoop);
+}
+
+function startTraining() {
+  if (isTraining) return;
+  isTraining = true;
+  trainBtn.textContent = "Pause";
+  trainingLoop();
+}
+
+function stopTraining() {
+  isTraining = false;
+  trainBtn.textContent = "Train";
+
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+}
+
+lrSlider.addEventListener("input", () => {
+  learningRate = parseFloat(lrSlider.value);
+  updateStatus();
+});
+
+hiddenSlider.addEventListener("input", () => {
+  hiddenSize = parseInt(hiddenSlider.value, 10);
+  stopTraining();
+  trainBtn.textContent = "Train";
+  initNetwork(hiddenSize);
+  epoch = 0;
+  render();
+  updateStatus();
+});
+
+trainBtn.addEventListener("click", () => {
+  if (isTraining) {
+    stopTraining();
+  } else {
+    startTraining();
+  }
+});
+
+resetBtn.addEventListener("click", () => {
+  stopTraining();
+  data = generateCircleData();
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
+
+initNetwork(hiddenSize);
+render();
+updateStatus();
