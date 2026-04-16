@@ -1,3 +1,7 @@
+// Add noise 
+// Add other shapes
+// Improve Design
+
 let learningRate = 0.03;
 let hiddenSize = 4;
 let isTraining = false;
