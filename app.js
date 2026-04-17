@@ -94,19 +94,43 @@ function toCanvasY(y) {
 
 function drawTrainPoints(points) {
   for (const p of points) {
+    const x = toCanvasX(p.x);
+    const y = toCanvasY(p.y);
+
     ctx.beginPath();
-    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = p.label === 1 ? "#e9b87c" : "#71ace6";
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+
+    // Fill = class
+    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615";
     ctx.fill();
+
+    // Border = dataset
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.8;
   }
 }
 
 function drawTestPoints(points) {
   for (const p of points) {
+    const x = toCanvasX(p.x);
+    const y = toCanvasY(p.y);
+
     ctx.beginPath();
-    ctx.arc(toCanvasX(p.x), toCanvasY(p.y), 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = p.label === 1 ? "#a66414" : "#144372";
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+
+    // Same fill (class)
+    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615" ;
     ctx.fill();
+
+    // White border
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.8;
   }
 }
 
@@ -384,6 +408,53 @@ function stopTraining() {
     cancelAnimationFrame(animationId);
     animationId = null;
   }
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function drawDecisionBoundary() {
+  const image = ctx.createImageData(canvas.width, canvas.height);
+
+  for (let py = 0; py < canvas.height; py++) {
+    for (let px = 0; px < canvas.width; px++) {
+      const x = (px / canvas.width) * 2 - 1;
+      const y = -((py / canvas.height) * 2 - 1);
+
+      const { out } = forward(x, y);
+
+      // confidence from boundary
+      const dist = Math.abs(out - 0.5) * 2; // 0 at boundary, 1 at extremes
+
+      let baseR, baseG, baseB;
+
+      if (out < 0.5) {
+        // base blue
+        baseR = 255;
+        baseG = 180;
+        baseB = 100;
+      } else {
+        // base orange
+        baseR = 70;
+        baseG = 130;
+        baseB = 180;
+      }
+
+      // blend toward white near the boundary
+      const r = lerp(255, baseR, dist);
+      const g = lerp(255, baseG, dist);
+      const b = lerp(255, baseB, dist);
+
+      const idx = (py * canvas.width + px) * 4;
+      image.data[idx] = Math.round(r);
+      image.data[idx + 1] = Math.round(g);
+      image.data[idx + 2] = Math.round(b);
+      image.data[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
 }
 
 noiseLevel = parseFloat(noiseSlider.value);
