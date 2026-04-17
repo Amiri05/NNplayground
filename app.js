@@ -1,4 +1,3 @@
-// Add noise 
 // Add other shapes
 // Improve Design
 
@@ -12,6 +11,7 @@ let lossHistory = [];
 let trainPercent = 50;
 let trainData = [];
 let testData = [];
+let noiseLevel = 0.08;
 
 let showTrainData = true;
 
@@ -19,6 +19,9 @@ const trainSplitSlider = document.getElementById("trainSplit");
 const trainSplitValue = document.getElementById("trainSplitValue");
 
 const showTrainCheckbox = document.getElementById("showTrainData");
+
+const noiseSlider = document.getElementById("noise");
+const noiseValue = document.getElementById("noiseValue");
 
 showTrainData = showTrainCheckbox.checked;
 
@@ -45,15 +48,16 @@ const lossCtx = lossCanvas.getContext("2d");
 // Dataset Generator
 
 // Circle Dataset
-function generateCircleData(n = 400, noise = 0.08) {
+function generateCircleData(n = 400, noise = 0.1) {
   const points = [];
 
   for (let i = 0; i < n; i++) {
     let x = Math.random() * 2 - 1;
     let y = Math.random() * 2 - 1;
 
-    x += (Math.random() * 2 - 1) * noise;
-    y += (Math.random() * 2 - 1) * noise;
+    // Gaussian noise
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
 
     const r = Math.sqrt(x * x + y * y);
     const label = r < 0.5 ? 1 : 0;
@@ -259,6 +263,48 @@ function drawLoss() {
   lossCtx.stroke();
 }
 
+function randn_bm() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function generateCircleData(n = 400, noise = 0.1) {
+  const points = [];
+  const half = Math.floor(n / 2);
+
+  // Inner circle: label 1
+  for (let i = 0; i < half; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 0.35;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 1 });
+  }
+
+  // Outer ring: label 0
+  for (let i = 0; i < half; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 0.6 + Math.random() * 0.35;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 0 });
+  }
+
+  return points;
+}
+
 /* Renderer
     - Background Decision Boundary 
     - Training Points
@@ -339,6 +385,23 @@ function stopTraining() {
     animationId = null;
   }
 }
+
+noiseLevel = parseFloat(noiseSlider.value);
+noiseValue.textContent = noiseLevel.toFixed(2);
+
+noiseSlider.addEventListener("input", () => {
+  noiseLevel = parseFloat(noiseSlider.value);
+  noiseValue.textContent = noiseLevel.toFixed(2);
+
+  stopTraining();
+  data = generateCircleData(400, noiseLevel);
+  splitData(data, trainPercent);
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
 
 showTrainCheckbox.addEventListener("change", () => {
   showTrainData = showTrainCheckbox.checked;
