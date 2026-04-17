@@ -1,6 +1,11 @@
-// Add other shapes
-// Improve Design
+// Gaussian Function noise not working correctly (noise 0 -> 1 blue 1 orange)
+// XOR noise not working correctly. (not doing it well)
+// Spiral noise is too sensitive.
 
+
+// =========================
+// State
+// =========================
 let learningRate = 0.03;
 let hiddenSize = 4;
 let isTraining = false;
@@ -12,132 +17,59 @@ let trainPercent = 50;
 let trainData = [];
 let testData = [];
 let noiseLevel = 0.08;
-
+let datasetType = "circle";
 let showTrainData = true;
 
-const trainSplitSlider = document.getElementById("trainSplit");
-const trainSplitValue = document.getElementById("trainSplitValue");
+let data = [];
 
-const showTrainCheckbox = document.getElementById("showTrainData");
+let W1, b1, W2, b2;
 
-const noiseSlider = document.getElementById("noise");
-const noiseValue = document.getElementById("noiseValue");
-
-showTrainData = showTrainCheckbox.checked;
-
-trainSplitSlider.addEventListener("input", () => {
-  trainPercent = parseInt(trainSplitSlider.value, 10);
-  trainSplitValue.textContent = `${trainPercent}%`;
-
-  stopTraining();
-  data = generateCircleData();
-  splitData(data, trainPercent);
-  initNetwork(hiddenSize);
-  epoch = 0;
-  lossHistory = [];
-  render();
-  updateStatus();
-});
-
-trainPercent = parseInt(trainSplitSlider.value, 10);
-trainSplitValue.textContent = `${trainPercent}%`;
+// =========================
+// DOM
+// =========================
+const canvas = document.getElementById("plot");
+const ctx = canvas.getContext("2d");
 
 const lossCanvas = document.getElementById("lossPlot");
 const lossCtx = lossCanvas.getContext("2d");
 
-// Dataset Generator
+const datasetSelect = document.getElementById("datasetSelect");
+const trainSplitSlider = document.getElementById("trainSplit");
+const trainSplitValue = document.getElementById("trainSplitValue");
+const showTrainCheckbox = document.getElementById("showTrainData");
+const noiseSlider = document.getElementById("noise");
+const noiseValue = document.getElementById("noiseValue");
+const lrSlider = document.getElementById("lr");
+const hiddenSlider = document.getElementById("hidden");
+const trainBtn = document.getElementById("trainBtn");
+const resetBtn = document.getElementById("resetBtn");
+const statusEl = document.getElementById("status");
 
-// Circle Dataset
-function generateCircleData(n = 400, noise = 0.1) {
-  const points = [];
+// Initialize state from UI
+datasetType = datasetSelect.value;
+trainPercent = parseInt(trainSplitSlider.value, 10);
+trainSplitValue.textContent = `${trainPercent}%`;
 
-  for (let i = 0; i < n; i++) {
-    let x = Math.random() * 2 - 1;
-    let y = Math.random() * 2 - 1;
+showTrainData = showTrainCheckbox.checked;
 
-    // Gaussian noise
-    x += randn_bm() * noise;
-    y += randn_bm() * noise;
+noiseLevel = parseFloat(noiseSlider.value);
+noiseValue.textContent = noiseLevel.toFixed(2);
 
-    const r = Math.sqrt(x * x + y * y);
-    const label = r < 0.5 ? 1 : 0;
+learningRate = parseFloat(lrSlider.value);
+hiddenSize = parseInt(hiddenSlider.value, 10);
 
-    points.push({ x, y, label });
-  }
-
-  return points;
-}
-
-const canvas = document.getElementById("plot");
-const ctx = canvas.getContext("2d");
-
-function splitData(points, trainPercent) {
-  const shuffled = [...points];
-  shuffle(shuffled);
-
-  const trainSize = Math.floor((trainPercent / 100) * shuffled.length);
-
-  trainData = shuffled.slice(0, trainSize);
-  testData = shuffled.slice(trainSize);
-}
-
-let data = generateCircleData();
-splitData(data, trainPercent);
-
-function toCanvasX(x) {
-  return ((x + 1) / 2) * canvas.width;
-}
-
-function toCanvasY(y) {
-  return canvas.height - ((y + 1) / 2) * canvas.height;
-}
-
-function drawTrainPoints(points) {
-  for (const p of points) {
-    const x = toCanvasX(p.x);
-    const y = toCanvasY(p.y);
-
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-
-    // Fill = class
-    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615";
-    ctx.fill();
-
-    // Border = dataset
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.globalAlpha = 0.8;
-  }
-}
-
-function drawTestPoints(points) {
-  for (const p of points) {
-    const x = toCanvasX(p.x);
-    const y = toCanvasY(p.y);
-
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-
-    // Same fill (class)
-    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615" ;
-    ctx.fill();
-
-    // White border
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2.0;
-    ctx.stroke();
-
-    ctx.globalAlpha = 0.8;
-  }
-}
-
-let W1, b1, W2, b2;
-
+// =========================
+// Utils
+// =========================
 function randn() {
-  return Math.random() * 2 - 1;
+  return (Math.random() * 2 - 1) * 0.5;
+}
+
+function randn_bm() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
 function tanh(x) {
@@ -152,10 +84,168 @@ function sigmoid(x) {
   return 1 / (1 + Math.exp(-x));
 }
 
-function initNetwork(hiddenSize) {
-  W1 = Array.from({ length: hiddenSize }, () => [randn(), randn()]);
-  b1 = Array.from({ length: hiddenSize }, () => randn());
-  W2 = Array.from({ length: hiddenSize }, () => randn());
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function toCanvasX(x) {
+  return ((x + 1) / 2) * canvas.width;
+}
+
+function toCanvasY(y) {
+  return canvas.height - ((y + 1) / 2) * canvas.height;
+}
+
+// =========================
+// Dataset Generators
+// =========================
+function generateCircleData(n = 400, noise = 0.1) {
+  const points = [];
+  const half = Math.floor(n / 2);
+
+  for (let i = 0; i < half; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.random() * 0.35;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 1 });
+  }
+
+  for (let i = 0; i < half; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 0.6 + Math.random() * 0.35;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 0 });
+  }
+
+  return points;
+}
+
+function generateXORData(n = 400, noise = 0.08) {
+  const points = [];
+
+  for (let i = 0; i < n; i++) {
+    let x = Math.random() * 2 - 1;
+    let y = Math.random() * 2 - 1;
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    const label = x * y >= 0 ? 1 : 0;
+    points.push({ x, y, label });
+  }
+
+  return points;
+}
+
+function generateGaussianData(n = 400, noise = 0.12) {
+  const points = [];
+  const half = Math.floor(n / 2);
+
+  for (let i = 0; i < half; i++) {
+    const x = -0.5 + randn_bm() * noise;
+    const y = -0.5 + randn_bm() * noise;
+    points.push({ x, y, label: 0 });
+  }
+
+  for (let i = 0; i < half; i++) {
+    const x = 0.5 + randn_bm() * noise;
+    const y = 0.5 + randn_bm() * noise;
+    points.push({ x, y, label: 1 });
+  }
+
+  return points;
+}
+
+function generateSpiralData(n = 400, noise = 0.08) {
+  const points = [];
+  const half = Math.floor(n / 2);
+
+  for (let i = 0; i < half; i++) {
+    const t = i / half;
+    const angle = 1.75 * Math.PI * t * 2;
+    const radius = t;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 0 });
+  }
+
+  for (let i = 0; i < half; i++) {
+    const t = i / half;
+    const angle = 1.75 * Math.PI * t * 2 + Math.PI;
+    const radius = t;
+
+    let x = radius * Math.cos(angle);
+    let y = radius * Math.sin(angle);
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
+    points.push({ x, y, label: 1 });
+  }
+
+  return points;
+}
+
+function generateDataset(type = datasetType, n = 400, noise = noiseLevel) {
+  switch (type) {
+    case "circle":
+      return generateCircleData(n, noise);
+    case "xor":
+      return generateXORData(n, noise);
+    case "gaussian":
+      return generateGaussianData(n, noise);
+    case "spiral":
+      return generateSpiralData(n, noise);
+    default:
+      return generateCircleData(n, noise);
+  }
+}
+
+function splitData(points, percent) {
+  const shuffled = [...points];
+  shuffle(shuffled);
+
+  const trainSize = Math.floor((percent / 100) * shuffled.length);
+  trainData = shuffled.slice(0, trainSize);
+  testData = shuffled.slice(trainSize);
+}
+
+function rebuildDataset() {
+  data = generateDataset(datasetType, 400, noiseLevel);
+  splitData(data, trainPercent);
+}
+
+// =========================
+// Network
+// =========================
+function initNetwork(size) {
+  W1 = Array.from({ length: size }, () => [randn(), randn()]);
+  b1 = Array.from({ length: size }, () => randn());
+  W2 = Array.from({ length: size }, () => randn());
   b2 = randn();
 }
 
@@ -175,7 +265,6 @@ function forward(x1, x2) {
   }
 
   const out = sigmoid(outRaw);
-
   return { hiddenRaw, hidden, outRaw, out };
 }
 
@@ -202,47 +291,19 @@ function trainStep(sample, lr) {
   }
 }
 
-function drawDecisionBoundary() {
-  const image = ctx.createImageData(canvas.width, canvas.height);
-
-  for (let py = 0; py < canvas.height; py++) {
-    for (let px = 0; px < canvas.width; px++) {
-      const x = (px / canvas.width) * 2 - 1;
-      const y = -((py / canvas.height) * 2 - 1);
-
-      const { out } = forward(x, y);
-
-      const idx = (py * canvas.width + px) * 4;
-
-      if (out > 0.5) {
-        image.data[idx] = 255;
-        image.data[idx + 1] = 220;
-        image.data[idx + 2] = 180;
-        image.data[idx + 3] = 255;
-      } else {
-        image.data[idx] = 180;
-        image.data[idx + 1] = 220;
-        image.data[idx + 2] = 255;
-        image.data[idx + 3] = 255;
-      }
-    }
+function trainEpoch(points, lr) {
+  shuffle(points);
+  for (const p of points) {
+    trainStep(p, lr);
   }
-
-  ctx.putImageData(image, 0, 0);
 }
 
-function render() {
-  drawDecisionBoundary();
-
-  if (showTrainData) {
-    drawTrainPoints(trainData);
-  }
-
-  drawTestPoints(testData);
-  drawLoss();
-}
-
+// =========================
+// Metrics
+// =========================
 function computeLoss(points) {
+  if (points.length === 0) return 0;
+
   let totalLoss = 0;
 
   for (const p of points) {
@@ -258,6 +319,89 @@ function computeLoss(points) {
   return totalLoss / points.length;
 }
 
+// =========================
+// Drawing
+// =========================
+function drawTrainPoints(points) {
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+
+  for (const p of points) {
+    const x = toCanvasX(p.x);
+    const y = toCanvasY(p.y);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615";
+    ctx.fill();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawTestPoints(points) {
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+
+  for (const p of points) {
+    const x = toCanvasX(p.x);
+    const y = toCanvasY(p.y);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = p.label === 1 ? "#7172d6" : "#efa615";
+    ctx.fill();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawDecisionBoundary() {
+  const image = ctx.createImageData(canvas.width, canvas.height);
+
+  for (let py = 0; py < canvas.height; py++) {
+    for (let px = 0; px < canvas.width; px++) {
+      const x = (px / canvas.width) * 2 - 1;
+      const y = -((py / canvas.height) * 2 - 1);
+
+      const { out } = forward(x, y);
+      const dist = Math.abs(out - 0.5) * 2;
+
+      let baseR, baseG, baseB;
+
+      if (out < 0.5) {
+        // blue side
+        baseR = 255;
+        baseG = 180;
+        baseB = 100;
+      } else {
+        // orange side
+        baseR = 70;
+        baseG = 130;
+        baseB = 180;
+      }
+
+      const r = lerp(255, baseR, dist);
+      const g = lerp(255, baseG, dist);
+      const b = lerp(255, baseB, dist);
+
+      const idx = (py * canvas.width + px) * 4;
+      image.data[idx] = Math.round(r);
+      image.data[idx + 1] = Math.round(g);
+      image.data[idx + 2] = Math.round(b);
+      image.data[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+}
+
 function drawLoss() {
   lossCtx.clearRect(0, 0, lossCanvas.width, lossCanvas.height);
 
@@ -270,16 +414,12 @@ function drawLoss() {
 
   lossHistory.forEach((loss, i) => {
     const x = (i / (lossHistory.length - 1)) * lossCanvas.width;
-
     const y =
       lossCanvas.height -
       ((loss - minLoss) / (maxLoss - minLoss + 1e-6)) * lossCanvas.height;
 
-    if (i === 0) {
-      lossCtx.moveTo(x, y);
-    } else {
-      lossCtx.lineTo(x, y);
-    }
+    if (i === 0) lossCtx.moveTo(x, y);
+    else lossCtx.lineTo(x, y);
   });
 
   lossCtx.strokeStyle = "black";
@@ -287,91 +427,32 @@ function drawLoss() {
   lossCtx.stroke();
 }
 
-function randn_bm() {
-  let u = 0, v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
+function render() {
+  drawDecisionBoundary();
 
-function generateCircleData(n = 400, noise = 0.1) {
-  const points = [];
-  const half = Math.floor(n / 2);
-
-  // Inner circle: label 1
-  for (let i = 0; i < half; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = Math.random() * 0.35;
-
-    let x = radius * Math.cos(angle);
-    let y = radius * Math.sin(angle);
-
-    x += randn_bm() * noise;
-    y += randn_bm() * noise;
-
-    points.push({ x, y, label: 1 });
+  if (showTrainData) {
+    drawTrainPoints(trainData);
   }
 
-  // Outer ring: label 0
-  for (let i = 0; i < half; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = 0.6 + Math.random() * 0.35;
-
-    let x = radius * Math.cos(angle);
-    let y = radius * Math.sin(angle);
-
-    x += randn_bm() * noise;
-    y += randn_bm() * noise;
-
-    points.push({ x, y, label: 0 });
-  }
-
-  return points;
+  drawTestPoints(testData);
+  drawLoss();
 }
 
-/* Renderer
-    - Background Decision Boundary 
-    - Training Points
-    - Network Diagram
-*/
-
-// UI Controller
-
-const lrSlider = document.getElementById("lr");
-const hiddenSlider = document.getElementById("hidden");
-const trainBtn = document.getElementById("trainBtn");
-const resetBtn = document.getElementById("resetBtn");
-const statusEl = document.getElementById("status");
-
-learningRate = parseFloat(lrSlider.value);
-hiddenSize = parseInt(hiddenSlider.value, 10);
-
+// =========================
+// Training Loop
+// =========================
 function updateStatus() {
   const trainLoss = computeLoss(trainData);
   const testLoss = computeLoss(testData);
 
   statusEl.textContent =
+    `Dataset: ${datasetType} | ` +
     `LR: ${learningRate.toFixed(3)} | ` +
     `Hidden: ${hiddenSize} | ` +
     `Epoch: ${epoch} | ` +
-    `Train %: ${trainPercent} | ` +
-    `Train Visible: ${showTrainData ? "Yes" : "No"} | ` +
+    `Train: ${trainPercent}% | ` +
     `Train Loss: ${trainLoss.toFixed(4)} | ` +
     `Test Loss: ${testLoss.toFixed(4)}`;
-}
-
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
-
-function trainEpoch(points, lr) {
-  shuffle(points);
-  for (const p of points) {
-    trainStep(p, lr);
-  }
 }
 
 function trainingLoop() {
@@ -380,9 +461,8 @@ function trainingLoop() {
   trainEpoch(trainData, learningRate);
   epoch++;
 
-  const loss = computeLoss(data);
+  const loss = computeLoss(trainData);
   lossHistory.push(loss);
-
   if (lossHistory.length > 200) {
     lossHistory.shift();
   }
@@ -410,63 +490,39 @@ function stopTraining() {
   }
 }
 
-function lerp(a, b, t) {
-  return a + (b - a) * t;
-}
+// =========================
+// Event Listeners
+// =========================
+datasetSelect.addEventListener("change", () => {
+  datasetType = datasetSelect.value;
+  stopTraining();
+  rebuildDataset();
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
 
-function drawDecisionBoundary() {
-  const image = ctx.createImageData(canvas.width, canvas.height);
+trainSplitSlider.addEventListener("input", () => {
+  trainPercent = parseInt(trainSplitSlider.value, 10);
+  trainSplitValue.textContent = `${trainPercent}%`;
 
-  for (let py = 0; py < canvas.height; py++) {
-    for (let px = 0; px < canvas.width; px++) {
-      const x = (px / canvas.width) * 2 - 1;
-      const y = -((py / canvas.height) * 2 - 1);
-
-      const { out } = forward(x, y);
-
-      // confidence from boundary
-      const dist = Math.abs(out - 0.5) * 2; // 0 at boundary, 1 at extremes
-
-      let baseR, baseG, baseB;
-
-      if (out < 0.5) {
-        // base blue
-        baseR = 255;
-        baseG = 180;
-        baseB = 100;
-      } else {
-        // base orange
-        baseR = 70;
-        baseG = 130;
-        baseB = 180;
-      }
-
-      // blend toward white near the boundary
-      const r = lerp(255, baseR, dist);
-      const g = lerp(255, baseG, dist);
-      const b = lerp(255, baseB, dist);
-
-      const idx = (py * canvas.width + px) * 4;
-      image.data[idx] = Math.round(r);
-      image.data[idx + 1] = Math.round(g);
-      image.data[idx + 2] = Math.round(b);
-      image.data[idx + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(image, 0, 0);
-}
-
-noiseLevel = parseFloat(noiseSlider.value);
-noiseValue.textContent = noiseLevel.toFixed(2);
+  stopTraining();
+  rebuildDataset();
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
 
 noiseSlider.addEventListener("input", () => {
   noiseLevel = parseFloat(noiseSlider.value);
   noiseValue.textContent = noiseLevel.toFixed(2);
 
   stopTraining();
-  data = generateCircleData(400, noiseLevel);
-  splitData(data, trainPercent);
+  rebuildDataset();
   initNetwork(hiddenSize);
   epoch = 0;
   lossHistory = [];
@@ -487,25 +543,6 @@ lrSlider.addEventListener("input", () => {
 hiddenSlider.addEventListener("input", () => {
   hiddenSize = parseInt(hiddenSlider.value, 10);
   stopTraining();
-  trainBtn.textContent = "Train";
-  initNetwork(hiddenSize);
-  epoch = 0;
-  render();
-  updateStatus();
-});
-
-trainBtn.addEventListener("click", () => {
-  if (isTraining) {
-    stopTraining();
-  } else {
-    startTraining();
-  }
-});
-
-resetBtn.addEventListener("click", () => {
-  stopTraining();
-  data = generateCircleData();
-  splitData(data, trainPercent);
   initNetwork(hiddenSize);
   epoch = 0;
   lossHistory = [];
@@ -513,8 +550,25 @@ resetBtn.addEventListener("click", () => {
   updateStatus();
 });
 
-data = generateCircleData();
-splitData(data, trainPercent);
+trainBtn.addEventListener("click", () => {
+  if (isTraining) stopTraining();
+  else startTraining();
+});
+
+resetBtn.addEventListener("click", () => {
+  stopTraining();
+  rebuildDataset();
+  initNetwork(hiddenSize);
+  epoch = 0;
+  lossHistory = [];
+  render();
+  updateStatus();
+});
+
+// =========================
+// Startup
+// =========================
+rebuildDataset();
 initNetwork(hiddenSize);
 render();
 updateStatus();
