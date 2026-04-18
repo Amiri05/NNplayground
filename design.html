@@ -1,196 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Header</title>
+  <title>Neural Network Playground</title>
+<link rel="icon" type="image/x-icon" href="logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="finalstyle.css" />
 </head>
 <body>
+<nav class="hdr">
 
-<nav class="hdr" id="hdr">
-
-  <!-- Section 1: Controls + Epoch -->
-  <div class="ctrl-section">
-    <button class="btn-pause" id="pauseBtn" title="Pause / Resume">
+  <!-- Section 1: Pause / Reset -->
+  <div class="seg">
+    <button class="btn" id="pauseBtn" title="Pause / Resume">
       <svg id="pauseIcon" viewBox="0 0 12 12">
-        <rect x="1.5" y="1" width="3.5" height="10" rx="1"/>
-        <rect x="7" y="1" width="3.5" height="10" rx="1"/>
+        <rect x="1.0" y="1" width="3.5" height="30" rx="1"/>
+        <rect x="7"   y="1" width="3.5" height="30" rx="1"/>
       </svg>
     </button>
-    <button class="btn-pause" id="resetBtn" title="Reset" style="opacity:0.6;">
+    <button class="btn" id="resetBtn" title="Reset" style="opacity:0.6;">
       <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M10 6A4 4 0 1 1 6 2.1"/>
         <polygon points="6,1 8.4,3.2 5.6,3.2" fill="currentColor" stroke="none"/>
       </svg>
     </button>
-    <div class="epoch-wrap">
-      <div class="epoch-label">epoch</div>
-      <div class="epoch-row">
-        <div class="epoch-val" id="epochVal">0042<span>/ ∞</span></div>
-        <div class="epoch-dot" id="epochDot"></div>
+  </div>
+
+  <!-- Section 2: Epoch -->
+  <div class="seg">
+    <div style="display:flex;flex-direction:column;gap:1px;">
+      <div class="mono-label">epoch</div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <div class="mono-val" id="epochVal">0042</div>
+        <div class="dot" id="dot"></div>
       </div>
     </div>
   </div>
 
-  <!-- Section 2: Data -->
-  <div class="hdr-section" data-menu="data">
-    <span>Data</span>
-    <svg class="caret" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-      <polyline points="1,2.5 4,5.5 7,2.5"/>
-    </svg>
-    <div class="dropdown">
-      <div class="dd-label">Sources</div>
-      <div class="dd-item"><i class="dd-icon">⊞</i>Dataset browser</div>
-      <div class="dd-item"><i class="dd-icon">↑</i>Import CSV / JSON</div>
-      <div class="dd-item"><i class="dd-icon">⊕</i>Connect pipeline</div>
-      <div class="dd-divider"></div>
-      <div class="dd-label">Transform</div>
-      <div class="dd-item"><i class="dd-icon">⧖</i>Preprocessing</div>
-      <div class="dd-item"><i class="dd-icon">≋</i>Augmentation</div>
-      <div class="dd-item"><i class="dd-icon">⊘</i>Validation split</div>
+  <!-- Section 3: Learning Rate -->
+  <div class="seg">
+    <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+      <div class="mono-label">learning rate</div>
+      <div class="mono-val" id="lrVal">0.001</div>
     </div>
-  </div>
-
-  <!-- Section 3: Model -->
-  <div class="hdr-section" data-menu="model">
-    <span>Model</span>
-    <svg class="caret" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-      <polyline points="1,2.5 4,5.5 7,2.5"/>
-    </svg>
-    <div class="dropdown">
-      <div class="dd-label">Architecture</div>
-      <div class="dd-item"><i class="dd-icon">◈</i>Layer editor</div>
-      <div class="dd-item"><i class="dd-icon">⬡</i>Backbone selection</div>
-      <div class="dd-item"><i class="dd-icon">∿</i>Activation functions</div>
-      <div class="dd-divider"></div>
-      <div class="dd-label">Config</div>
-      <div class="dd-item"><i class="dd-icon">⊙</i>Hyperparameters</div>
-      <div class="dd-item"><i class="dd-icon">≡</i>Load checkpoint</div>
+    <div style="display:flex;align-items:center;gap:6px;flex:1;">
+      <span class="mono-label" style="font-size:8px;white-space:nowrap;">0.001</span>
+      <input type="range" class="lr-slider" id="lrSlider" min="1" max="100" step="1" value="1"/>
+      <span class="mono-label" style="font-size:8px;white-space:nowrap;">0.100</span>
     </div>
-  </div>
-
-  <!-- Section 4: Training -->
-  <div class="hdr-section" data-menu="training">
-    <span>Training</span>
-    <svg class="caret" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-      <polyline points="1,2.5 4,5.5 7,2.5"/>
-    </svg>
-    <div class="dropdown">
-      <div class="dd-label">Schedule</div>
-      <div class="dd-item"><i class="dd-icon">⇌</i>Optimizer</div>
-      <div class="dd-item"><i class="dd-icon">↘</i>Learning rate</div>
-      <div class="dd-item"><i class="dd-icon">◷</i>Scheduler</div>
-      <div class="dd-divider"></div>
-      <div class="dd-item"><i class="dd-icon">▦</i>Batch settings</div>
-      <div class="dd-item"><i class="dd-icon">⊛</i>Regularization</div>
-      <div class="dd-item"><i class="dd-icon">⦾</i>Early stopping</div>
-    </div>
-  </div>
-
-  <!-- Section 5: Metrics -->
-  <div class="hdr-section" data-menu="metrics">
-    <span>Metrics</span>
-    <svg class="caret" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-      <polyline points="1,2.5 4,5.5 7,2.5"/>
-    </svg>
-    <div class="dropdown">
-      <div class="dd-label">Live</div>
-      <div class="dd-item"><i class="dd-icon">∿</i>Loss curves</div>
-      <div class="dd-item"><i class="dd-icon">◎</i>Accuracy</div>
-      <div class="dd-item"><i class="dd-icon">⊡</i>Confusion matrix</div>
-      <div class="dd-divider"></div>
-      <div class="dd-label">Export</div>
-      <div class="dd-item"><i class="dd-icon">↓</i>Download report</div>
-      <div class="dd-item"><i class="dd-icon">⊞</i>Tensorboard</div>
-    </div>
-  </div>
-
-  <!-- Section 6: Deploy -->
-  <div class="hdr-section" data-menu="deploy">
-    <span>Deploy</span>
-    <svg class="caret" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
-      <polyline points="1,2.5 4,5.5 7,2.5"/>
-    </svg>
-    <div class="dropdown align-right">
-      <div class="dd-label">Export model</div>
-      <div class="dd-item"><i class="dd-icon">⬡</i>ONNX</div>
-      <div class="dd-item"><i class="dd-icon">◈</i>TorchScript</div>
-      <div class="dd-item"><i class="dd-icon">⊞</i>TensorFlow SavedModel</div>
-      <div class="dd-divider"></div>
-      <div class="dd-label">Serve</div>
-      <div class="dd-item"><i class="dd-icon">⊙</i>REST endpoint</div>
-      <div class="dd-item"><i class="dd-icon">⇌</i>Batch inference</div>
-    </div>
-  </div>
-
-  <!-- Section 7: Status -->
-  <div class="status-section">
-    <svg width="8" height="8" viewBox="0 0 8 8">
-      <circle cx="4" cy="4" r="3.5" fill="#1D9E75" opacity="0.8"/>
-    </svg>
-    <span id="statusText">running</span>
   </div>
 
 </nav>
-
+ 
 <script>
-  const sections = document.querySelectorAll('[data-menu]');
-  let activeSection = null;
-
-  sections.forEach(sec => {
-    sec.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (activeSection && activeSection !== sec) {
-        activeSection.classList.remove('active');
-      }
-      sec.classList.toggle('active');
-      activeSection = sec.classList.contains('active') ? sec : null;
-    });
+  const lrSlider = document.getElementById('lrSlider');
+  const lrVal    = document.getElementById('lrVal');
+ 
+  lrSlider.addEventListener('input', () => {
+    lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
   });
-
-  document.addEventListener('click', () => {
-    if (activeSection) {
-      activeSection.classList.remove('active');
-      activeSection = null;
-    }
-  });
-
+ 
   let paused = false;
-  let epoch = 42;
-  const pauseBtn = document.getElementById('pauseBtn');
+  let epoch  = 0;
+  const pauseBtn  = document.getElementById('pauseBtn');
   const pauseIcon = document.getElementById('pauseIcon');
-  const epochVal = document.getElementById('epochVal');
-  const epochDot = document.getElementById('epochDot');
-  const statusText = document.getElementById('statusText');
-
-  const playPath = '<polygon points="2.5,1.5 10,6 2.5,10.5" />';
-  const pausePath = '<rect x="1.5" y="1" width="3.5" height="10" rx="1"/><rect x="7" y="1" width="3.5" height="10" rx="1"/>';
-
+  const epochVal  = document.getElementById('epochVal');
+  const dot       = document.getElementById('dot');
+ 
+  const PLAY  = '<polygon points="2.5,1.5 10,6 2.5,10.5"/>';
+  const PAUSE = '<rect x="1.5" y="1" width="3.5" height="10" rx="1"/><rect x="7" y="1" width="3.5" height="10" rx="1"/>';
+ 
+  function fmt(n) {
+    return String(n).padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1,$2');
+  }
+ 
+  function render() {
+    epochVal.innerHTML = fmt(epoch);
+  }
+ 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    pauseIcon.innerHTML = paused ? playPath : pausePath;
-    epochDot.className = paused ? 'epoch-dot paused' : 'epoch-dot';
-    statusText.textContent = paused ? 'paused' : 'running';
+    pauseIcon.innerHTML = paused ? PLAY : PAUSE;
+    dot.className = paused ? 'dot off' : 'dot';
   });
-
+ 
   document.getElementById('resetBtn').addEventListener('click', () => {
-    epoch = 0;
+    epoch  = 0;
     paused = false;
-    pauseIcon.innerHTML = pausePath;
-    epochDot.className = 'epoch-dot';
-    statusText.textContent = 'running';
-    epochVal.innerHTML = '0000<span>/ ∞</span>';
+    pauseIcon.innerHTML = PAUSE;
+    dot.className = 'dot';
+    render();
   });
-
+ 
+  // 1 epoch per tick, every 20ms = 50 epochs per second
   setInterval(() => {
     if (!paused) {
-      epoch++;
-      epochVal.innerHTML = String(epoch).padStart(4, '0') + '<span>/ ∞</span>';
+      epoch += 1;
+      render();
     }
-  }, 800);
+  }, 20);
+ 
+  render();
+
+  document.querySelectorAll('.slider-row input[type=range]').forEach(input => {
+    const out = document.getElementById(input.dataset.out);
+    input.addEventListener('input', () => {
+      out.textContent = (parseInt(input.value) / 100).toFixed(2);
+    });
+  });
+ 
+  document.querySelectorAll('.img-card input[type=file]').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const idx   = inp.dataset.card;
+      const card  = document.getElementById('imgCard' + idx);
+      const thumb = document.getElementById('imgThumb' + idx);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        thumb.src = ev.target.result;
+        card.classList.add('has-image', 'selected');
+      };
+      reader.readAsDataURL(file);
+    });
+  });
 </script>
 
 </body>
