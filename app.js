@@ -1,8 +1,3 @@
-// Gaussian Function noise not working correctly (noise 0 -> 1 blue 1 orange)
-// XOR noise not working correctly. (not doing it well)
-// Spiral noise is too sensitive.
-
-
 // =========================
 // State
 // =========================
@@ -156,19 +151,30 @@ function generateXORData(n = 400, noise = 0.08) {
   return points;
 }
 
-function generateGaussianData(n = 400, noise = 0.12) {
+function generateGaussianData(n = 400, noise = 0.1) {
   const points = [];
   const half = Math.floor(n / 2);
 
+  const spread = 0.1; // base cluster size (always there)
+
   for (let i = 0; i < half; i++) {
-    const x = -0.5 + randn_bm() * noise;
-    const y = -0.5 + randn_bm() * noise;
+    let x = -0.5 + randn_bm() * spread;
+    let y = -0.5 + randn_bm() * spread;
+
+    // extra noise
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
     points.push({ x, y, label: 0 });
   }
 
   for (let i = 0; i < half; i++) {
-    const x = 0.5 + randn_bm() * noise;
-    const y = 0.5 + randn_bm() * noise;
+    let x = 0.5 + randn_bm() * spread;
+    let y = 0.5 + randn_bm() * spread;
+
+    x += randn_bm() * noise;
+    y += randn_bm() * noise;
+
     points.push({ x, y, label: 1 });
   }
 
@@ -187,8 +193,11 @@ function generateSpiralData(n = 400, noise = 0.08) {
     let x = radius * Math.cos(angle);
     let y = radius * Math.sin(angle);
 
-    x += randn_bm() * noise;
-    y += randn_bm() * noise;
+    // scale noise with radius
+    const localNoise = noise * (0.1 + radius);
+
+    x += randn_bm() * localNoise;
+    y += randn_bm() * localNoise;
 
     points.push({ x, y, label: 0 });
   }
@@ -201,8 +210,10 @@ function generateSpiralData(n = 400, noise = 0.08) {
     let x = radius * Math.cos(angle);
     let y = radius * Math.sin(angle);
 
-    x += randn_bm() * noise;
-    y += randn_bm() * noise;
+    const localNoise = noise * (0.3 + radius);
+
+    x += randn_bm() * localNoise;
+    y += randn_bm() * localNoise;
 
     points.push({ x, y, label: 1 });
   }
