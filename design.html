@@ -1,3 +1,11 @@
+<!-- Pending
+- Assets for Dataset
+- Set up sliders to connect to information
+- Transfer code to a js file, avoid overriding
+- Set up canvas
+- Set up Loss function.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,8 +59,46 @@
       <span class="mono-label" style="font-size:8px;white-space:nowrap;">0.100</span>
     </div>
   </div>
-
 </nav>
+
+<div class="left-sidebar-grid">
+    <section class="left-sidebar" style="font-size: 30px;">Controls
+         <p>Dataset</p>
+         <div style="padding-bottom: 20px;">
+            <div class="divSquare"><img src=test.webp></div>
+            <div class="divSquare"><img src=test.webp></div>
+            <div style='clear:both'></div>
+            <div class="divSquare"><img src=test.webp></div>
+            <div class="divSquare"><img src=test.webp></div>
+            <div style='clear:both'></div>
+         </div>
+         <p>Hidden Neurons <br>
+            <input type="range" class="controls-lr-slider" id="lrSlider" min="1" max="8" step="1" value="1"/>
+         </p>
+         <p>Train % <br>
+            <input type="range" class="controls-lr-slider" id="lrSlider" min="10" max="90" step="1" value="1"/>
+         </p>
+         <p>Noise <br>
+            <input type="range" class="controls-lr-slider" id="lrSlider" min="0" max="50" step="1" value="1"/>
+         </p>
+         <p><input type="checkbox"> Show Training Data</p>
+
+         <h2 style="font-size: 30px; padding-top: 20px;">Information</h2>
+         <p>Dataset: XXXXXX</p>
+         <p>LR: 0.XXX</p>
+         <p>Hidden: X</p>
+         <p>Train: XX%</p>
+         <p>Train Loss: 0.XXXXX</p>
+         <p>Test Loss: 0.XXXXX</p>
+    </section>
+    <main class="main-content" style="margin: auto;">
+        <canvas id="plot" width="600" height="600" style="background-color: rgb(182, 193, 193);"></canvas>
+    </main>
+    <main class="loss-function" style="margin: auto;">
+        <p>Loss Function</p>
+        <canvas id="lossPlot" width="320" style="background-color: rgb(155, 164, 172);"></canvas>
+    </main>
+</div>
  
 <script>
   const lrSlider = document.getElementById('lrSlider');

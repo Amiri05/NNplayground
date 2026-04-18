@@ -1,7 +1,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #ebf4f5;
+      background: #ffdd6fc0;
       display: flex;
       align-items: flex-start;
       justify-content: center;
@@ -11,15 +11,15 @@
     }
 
     :root {
-      --bg-primary: #d2e6ee;
-      --text-primary: #0e1138;
-      --text-secondary: #5f5e5a;
-      --text-tertiary: #124a5b;
-      --border-tertiary: rgba(0,0,0,0.10);
-      --border-secondary: rgba(183, 181, 215, 0.59);
+      --bg-primary: #5260df;
+      --text-primary: #efbe75;
+      --text-secondary: #f1cd63;
+      --text-tertiary: #fecb74;
+      --border-tertiary: rgba(229, 255, 0, 0.573);
+      --border-secondary: rgba(220, 234, 69, 0.59);
       --radius-md: 70px;
       --radius-lg: 8px;
-      --green: #1d629e;
+      --green: #7bca65;
     }
 
     .hdr {
@@ -97,11 +97,75 @@
     }
 
     .lr-slider {
-      accent-color: var(--green);
+      accent-color: var(--text-tertiary);
       cursor: pointer;
       flex: 1;
       min-width: 80px;
       max-width: 15%;
     }
 
-    
+
+    /* grid container */
+.left-sidebar-grid {
+    font-family: 'Syne', sans-serif;
+    display:grid;
+    padding-top: 5px;
+    grid-template-areas:
+        'main-content'
+        'left-sidebar'
+        'loss-function';
+        width: 100%;
+}
+
+/* general column padding */
+.left-sidebar-grid > * {
+    padding:1rem;
+}
+
+.left-sidebar-grid > .main-content {
+    grid-area:main-content;
+}
+.left-sidebar-grid > .left-sidebar {
+    grid-area:left-sidebar;
+    background:var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 10px;
+}
+
+.left-sidebar-grid > .loss-function {
+    grid-area: loss-function;
+    font-size: 30px;
+    color: var(--bg-primary)
+}
+
+/* tablet breakpoint */
+@media (min-width:768px) {
+    .left-sidebar-grid {
+        grid-template-columns:repeat(4, 1fr);
+        grid-template-areas:
+            'left-sidebar main-content main-content loss-function';
+    }
+}
+
+.left-sidebar p {
+    font-size: 15px;
+    padding-bottom: 8px;
+    font-weight: lighter;
+        color:#f3f3f3;
+}
+
+.divSquare{
+    width:40px; height:40px; margin:4px; float:left;
+}
+
+.divSquare img {
+    height:40px;
+}
+
+.controls-lr-slider {
+    accent-color: var(--text-primary);
+    cursor: pointer;
+    flex: 1;
+    min-width: 80px;
+    max-width: 35%;
+}
