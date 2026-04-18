@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  background: #e8eef1;
 }
 
 .app {
@@ -11,7 +11,7 @@ body {
 }
 
 .controls {
-  background: white;
+  background: #d5e3e9;
   padding: 20px;
   border-right: 1px solid #ddd;
 }
