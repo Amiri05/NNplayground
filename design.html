@@ -81,12 +81,13 @@
          <p><input type="checkbox"> Show Training Data</p>
 
          <h2 style="font-size: 30px; padding-top: 20px;">Information</h2>
-         <p>Dataset: XXXXXX</p>
-         <p>LR: 0.XXX</p>
-         <p>Hidden: X</p>
-         <p>Train: XX%</p>
-         <p>Train Loss: 0.XXXXX</p>
-         <p>Test Loss: 0.XXXXX</p>
+          <p>Dataset: <span id="infoDataset">Circle</span></p>
+          <p>LR: <span id="infoLR">0.001</span></p>
+          <p>Hidden: <span id="infoHidden">4</span></p>
+          <p>Train: <span id="infoTrain">50%</span></p>
+          <p>Noise: <span id="infoNoise">0</span></p>
+          <p>Train Loss: <span id="infoTrainLoss">0.00000</span></p>
+          <p>Test Loss: <span id="infoTestLoss">0.00000</span></p>
     </section>
     <main class="main-content" style="margin: auto;">
         <canvas id="plot" width="600" height="600" style="background-color: rgb(182, 193, 193);"></canvas>
@@ -103,6 +104,14 @@
   const trainSlider = document.getElementById('trainSlider');
   const noiseSlider = document.getElementById('noiseSlider');
   const lrVal = document.getElementById('lrVal');
+
+  const infoDataset = document.getElementById('infoDataset');
+  const infoLR = document.getElementById('infoLR');
+  const infoHidden = document.getElementById('infoHidden');
+  const infoTrain = document.getElementById('infoTrain');
+  const infoNoise = document.getElementById('infoNoise');
+  const infoTrainLoss = document.getElementById('infoTrainLoss');
+  const infoTestLoss = document.getElementById('infoTestLoss');
  
   lrSlider.addEventListener('input', () => {
     lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
@@ -119,6 +128,32 @@
   noiseSlider.addEventListener('input', () => {
     console.log("Noise:", noiseSlider.value);
   });
+
+  function updateInfo() {
+  infoDataset.textContent = 'Circle'; // change later when dataset buttons work
+  infoLR.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
+  infoHidden.textContent = hiddenSlider.value;
+  infoTrain.textContent = `${trainSlider.value}%`;
+  infoNoise.textContent = noiseSlider.value;
+}
+
+lrSlider.addEventListener('input', () => {
+  lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
+  updateInfo();
+});
+
+hiddenSlider.addEventListener('input', () => {
+  updateInfo();
+});
+
+trainSlider.addEventListener('input', () => {
+  updateInfo();
+});
+
+noiseSlider.addEventListener('input', () => {
+  updateInfo();
+});
+
 
   function syncPlaybackUI() {
     pauseIcon.innerHTML = paused ? PLAY : PAUSE;
@@ -164,6 +199,7 @@ resetBtn.addEventListener('click', () => {
 
 syncPlaybackUI();
 render();
+updateInfo();
 
   // 1 epoch per tick, every 20ms = 50 epochs per second
   setInterval(() => {
