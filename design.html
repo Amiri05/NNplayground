@@ -73,14 +73,11 @@
             <div style='clear:both'></div>
          </div>
          <p>Hidden Neurons <br>
-            <input type="range" class="controls-lr-slider" id="lrSlider" min="1" max="8" step="1" value="4"/>
-         </p>
+            <input type="range" class="controls-lr-slider" id="hiddenSlider" min="1" max="8" step="1" value="4"/>         </p>
          <p>Train % <br>
-            <input type="range" class="controls-lr-slider" id="lrSlider" min="10" max="90" step="1" value="50"/>
-         </p>
+            <input type="range" class="controls-lr-slider" id="trainSlider" min="10" max="90" step="1" value="50"/>         </p>
          <p>Noise <br>
-            <input type="range" class="controls-lr-slider" id="lrSlider" min="0" max="50" step="1" value="0"/>
-         </p>
+            <input type="range" class="controls-lr-slider" id="noiseSlider" min="0" max="50" step="1" value="0"/>         </p>
          <p><input type="checkbox"> Show Training Data</p>
 
          <h2 style="font-size: 30px; padding-top: 20px;">Information</h2>
@@ -101,45 +98,73 @@
 </div>
  
 <script>
-  const lrSlider = document.getElementById('lrSlider');
-  const lrVal    = document.getElementById('lrVal');
+  const lrSlider = document.getElementById('lrSlider');  
+  const hiddenSlider = document.getElementById('hiddenSlider');
+  const trainSlider = document.getElementById('trainSlider');
+  const noiseSlider = document.getElementById('noiseSlider');
+  const lrVal = document.getElementById('lrVal');
  
   lrSlider.addEventListener('input', () => {
     lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
   });
- 
-  let paused = true;
-  let epoch  = 0;
-  const pauseBtn  = document.getElementById('pauseBtn');
-  const pauseIcon = document.getElementById('pauseIcon');
-  const epochVal  = document.getElementById('epochVal');
-  const dot       = document.getElementById('dot');
- 
-  const PLAY  = '<polygon points="2.5,1.5 10,6 2.5,10.5"/>';
-  const PAUSE = '<rect x="1.5" y="1" width="3.5" height="10" rx="1"/><rect x="7" y="1" width="3.5" height="10" rx="1"/>';
- 
-  function fmt(n) {
-    return String(n).padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1,$2');
-  }
- 
-  function render() {
-    epochVal.innerHTML = fmt(epoch);
-  }
- 
-  pauseBtn.addEventListener('click', () => {
-    paused = !paused;
+
+  hiddenSlider.addEventListener('input', () => {
+  console.log("Hidden:", hiddenSlider.value);
+  });
+
+  trainSlider.addEventListener('input', () => {
+    console.log("Train %:", trainSlider.value);
+  });
+
+  noiseSlider.addEventListener('input', () => {
+    console.log("Noise:", noiseSlider.value);
+  });
+
+  function syncPlaybackUI() {
     pauseIcon.innerHTML = paused ? PLAY : PAUSE;
     dot.className = paused ? 'dot off' : 'dot';
-  });
- 
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    epoch = 0;
-    paused = true;
-    pauseIcon.innerHTML = PLAY;
-    dot.className = 'dot off';
-    render();
-  });
- 
+  }
+
+  let paused = true;
+let epoch = 0;
+
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseIcon = document.getElementById('pauseIcon');
+const epochVal = document.getElementById('epochVal');
+const dot = document.getElementById('dot');
+const resetBtn = document.getElementById('resetBtn');
+
+const PLAY = '<polygon points="2.5,1.5 10,6 2.5,10.5"/>';
+const PAUSE = '<rect x="1.5" y="1" width="3.5" height="10" rx="1"/><rect x="7" y="1" width="3.5" height="10" rx="1"/>';
+
+function syncPlaybackUI() {
+  pauseIcon.innerHTML = paused ? PLAY : PAUSE;
+  dot.className = paused ? 'dot off' : 'dot';
+}
+
+function fmt(n) {
+  return String(n).padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1,$2');
+}
+
+function render() {
+  epochVal.textContent = fmt(epoch);
+}
+
+pauseBtn.addEventListener('click', () => {
+  paused = !paused;
+  syncPlaybackUI();
+});
+
+resetBtn.addEventListener('click', () => {
+  epoch = 0;
+  paused = true;
+  syncPlaybackUI();
+  render();
+});
+
+syncPlaybackUI();
+render();
+
   // 1 epoch per tick, every 20ms = 50 epochs per second
   setInterval(() => {
     if (!paused) {
