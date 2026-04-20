@@ -108,7 +108,7 @@
     lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
   });
  
-  let paused = false;
+  let paused = true;
   let epoch  = 0;
   const pauseBtn  = document.getElementById('pauseBtn');
   const pauseIcon = document.getElementById('pauseIcon');
@@ -133,10 +133,10 @@
   });
  
   document.getElementById('resetBtn').addEventListener('click', () => {
-    epoch  = 0;
-    paused = false;
-    pauseIcon.innerHTML = PAUSE;
-    dot.className = 'dot';
+    epoch = 0;
+    paused = true;
+    pauseIcon.innerHTML = PLAY;
+    dot.className = 'dot off';
     render();
   });
  
