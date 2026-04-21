@@ -160,6 +160,8 @@
 
 .divSquare img {
     height:40px;
+    border-radius: 5%;
+    border: 1.5px solid black;
 }
 
 .controls-lr-slider {
