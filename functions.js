@@ -1,132 +1,134 @@
-const lrSlider = document.getElementById('lrSlider');  
-  const hiddenSlider = document.getElementById('hiddenSlider');
-  const trainSlider = document.getElementById('trainSlider');
-  const noiseSlider = document.getElementById('noiseSlider');
-  const lrVal = document.getElementById('lrVal');
+const lrSlider = document.getElementById("lr");
+const hiddenSlider = document.getElementById("hidden");
+const trainSplitSlider = document.getElementById("trainSplit");
+const noiseSlider = document.getElementById("noise");
+const showTrainCheckbox = document.getElementById("showTrainData");
 
-  const infoDataset = document.getElementById('infoDataset');
-  const infoHidden = document.getElementById('infoHidden');
-  const infoTrain = document.getElementById('infoTrain');
-  const infoNoise = document.getElementById('infoNoise');
-  const infoTrainLoss = document.getElementById('infoTrainLoss');
-  const infoTestLoss = document.getElementById('infoTestLoss');
- 
-  lrSlider.addEventListener('input', () => {
-    lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
-  });
+const trainBtn = document.getElementById("trainBtn");
+const resetBtn = document.getElementById("resetBtn");
 
-  hiddenSlider.addEventListener('input', () => {
-  console.log("Hidden:", hiddenSlider.value);
-  });
+const datasetSelect = document.getElementById("datasetSelect");
+const datasetCards = document.querySelectorAll(".dataset-card");
 
-  trainSlider.addEventListener('input', () => {
-    console.log("Train %:", trainSlider.value);
-  });
+const lrVal = document.getElementById("lrVal");
+const epochVal = document.getElementById("epochVal");
+const pauseIcon = document.getElementById("pauseIcon");
+const dot = document.getElementById("dot");
 
-  noiseSlider.addEventListener('input', () => {
-    console.log("Noise:", noiseSlider.value);
-  });
+const trainSplitValue = document.getElementById("trainSplitValue");
+const noiseValue = document.getElementById("noiseValue");
 
-  function updateInfo() {
-  infoDataset.textContent = 'Circle'; // change later when dataset buttons work
-  infoHidden.textContent = hiddenSlider.value;
-  infoTrain.textContent = `${trainSlider.value}%`;
-  infoNoise.textContent = `${noiseSlider.value / 100}`;
-}
+const infoDataset = document.getElementById("infoDataset");
+const infoHidden = document.getElementById("infoHidden");
+const infoTrain = document.getElementById("infoTrain");
+const infoNoise = document.getElementById("infoNoise");
+const infoTrainLoss = document.getElementById("infoTrainLoss");
+const infoTestLoss = document.getElementById("infoTestLoss");
 
-lrSlider.addEventListener('input', () => {
-  lrVal.textContent = (parseInt(lrSlider.value) / 1000).toFixed(3);
-  updateInfo();
-});
+let datasetType = datasetSelect.value;
+let learningRate = parseFloat(lrSlider.value);
+let hiddenSize = parseInt(hiddenSlider.value, 10);
+let trainPercent = parseInt(trainSplitSlider.value, 10);
+let noiseLevel = parseFloat(noiseSlider.value);
+let showTrainData = showTrainCheckbox.checked;
 
-hiddenSlider.addEventListener('input', () => {
-  updateInfo();
-});
-
-trainSlider.addEventListener('input', () => {
-  updateInfo();
-});
-
-noiseSlider.addEventListener('input', () => {
-  updateInfo();
-});
-
-
-  function syncPlaybackUI() {
-    pauseIcon.innerHTML = paused ? PLAY : PAUSE;
-    dot.className = paused ? 'dot off' : 'dot';
-  }
-
-  let paused = true;
+let isTraining = false;
 let epoch = 0;
-
-const pauseBtn = document.getElementById('pauseBtn');
-const pauseIcon = document.getElementById('pauseIcon');
-const epochVal = document.getElementById('epochVal');
-const dot = document.getElementById('dot');
-const resetBtn = document.getElementById('resetBtn');
+let timer = null;
 
 const PLAY = '<polygon points="2.5,1.5 10,6 2.5,10.5"/>';
 const PAUSE = '<rect x="1.5" y="1" width="3.5" height="10" rx="1"/><rect x="7" y="1" width="3.5" height="10" rx="1"/>';
 
+function capitalize(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function syncPlaybackUI() {
-  pauseIcon.innerHTML = paused ? PLAY : PAUSE;
-  dot.className = paused ? 'dot off' : 'dot';
+  pauseIcon.innerHTML = isTraining ? PAUSE : PLAY;
+  dot.className = isTraining ? "dot" : "dot off";
 }
 
-function fmt(n) {
-  return String(n).padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1,$2');
+function updateDatasetButtons(selectedValue) {
+  datasetCards.forEach((card) => {
+    card.classList.toggle("active", card.dataset.dataset === selectedValue);
+  });
 }
 
-function render() {
-  epochVal.textContent = fmt(epoch);
+function updateInfo() {
+  lrVal.textContent = learningRate.toFixed(3);
+  epochVal.textContent = String(epoch).padStart(4, "0");
+
+  trainSplitValue.textContent = `${trainPercent}%`;
+  noiseValue.textContent = noiseLevel.toFixed(2);
+
+  infoDataset.textContent = capitalize(datasetType);
+  infoHidden.textContent = hiddenSize;
+  infoTrain.textContent = `${trainPercent}%`;
+  infoNoise.textContent = noiseLevel.toFixed(2);
+  
+  // placeholders until training/loss math is wired in
+  infoTrainLoss.textContent = "0.00000";
+  infoTestLoss.textContent = "0.00000";
 }
 
-pauseBtn.addEventListener('click', () => {
-  paused = !paused;
-  syncPlaybackUI();
+datasetCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    datasetType = card.dataset.dataset;
+    datasetSelect.value = datasetType;
+    updateDatasetButtons(datasetType);
+    updateInfo();
+  });
 });
 
-resetBtn.addEventListener('click', () => {
-  epoch = 0;
-  paused = true;
+lrSlider.addEventListener("input", () => {
+  learningRate = parseFloat(lrSlider.value);
+  updateInfo();
+});
+
+hiddenSlider.addEventListener("input", () => {
+  hiddenSize = parseInt(hiddenSlider.value, 10);
+  updateInfo();
+});
+
+trainSplitSlider.addEventListener("input", () => {
+  trainPercent = parseInt(trainSplitSlider.value, 10);
+  updateInfo();
+});
+
+noiseSlider.addEventListener("input", () => {
+  noiseLevel = parseFloat(noiseSlider.value);
+  updateInfo();
+});
+
+showTrainCheckbox.addEventListener("change", () => {
+  showTrainData = showTrainCheckbox.checked;
+  updateInfo();
+});
+
+trainBtn.addEventListener("click", () => {
+  isTraining = !isTraining;
   syncPlaybackUI();
-  render();
+
+  if (isTraining) {
+    timer = setInterval(() => {
+      epoch += 1;
+      updateInfo();
+    }, 60);
+  } else {
+    clearInterval(timer);
+    timer = null;
+  }
+});
+
+resetBtn.addEventListener("click", () => {
+  isTraining = false;
+  clearInterval(timer);
+  timer = null;
+  epoch = 0;
+  syncPlaybackUI();
+  updateInfo();
 });
 
 syncPlaybackUI();
-render();
+updateDatasetButtons(datasetType);
 updateInfo();
-
-  // 1 epoch per tick, every 20ms = 50 epochs per second
-  setInterval(() => {
-    if (!paused) {
-      epoch += 1;
-      render();
-    }
-  }, 20);
- 
-  render();
-
-  document.querySelectorAll('.slider-row input[type=range]').forEach(input => {
-    const out = document.getElementById(input.dataset.out);
-    input.addEventListener('input', () => {
-      out.textContent = (parseInt(input.value) / 100).toFixed(2);
-    });
-  });
- 
-  document.querySelectorAll('.img-card input[type=file]').forEach(inp => {
-    inp.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const idx   = inp.dataset.card;
-      const card  = document.getElementById('imgCard' + idx);
-      const thumb = document.getElementById('imgThumb' + idx);
-      const reader = new FileReader();
-      reader.onload = ev => {
-        thumb.src = ev.target.result;
-        card.classList.add('has-image', 'selected');
-      };
-      reader.readAsDataURL(file);
-    });
-  });
