@@ -171,3 +171,19 @@
     min-width: 80px;
     max-width: 35%;
 }
+
+.dataset-card {
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.dataset-card img {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.dataset-card.active img {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

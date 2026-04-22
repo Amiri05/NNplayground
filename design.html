@@ -22,8 +22,8 @@
 
   <!-- Section 1: Pause / Reset -->
   <div class="seg">
-    <button class="btn" id="pauseBtn" title="Pause / Resume">
-      <svg id="pauseIcon" viewBox="0 0 12 12">
+  <button class="btn" id="trainBtn" title="Train / Pause">
+        <svg id="pauseIcon" viewBox="0 0 12 12">
         <rect x="1.0" y="1" width="3.5" height="30" rx="1"/>
         <rect x="7"   y="1" width="3.5" height="30" rx="1"/>
       </svg>
@@ -55,7 +55,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:6px;flex:1;">
       <span class="mono-label" style="font-size:8px;white-space:nowrap;">0.001</span>
-      <input type="range" class="lr-slider" id="lrSlider" min="1" max="100" step="1" value="1"/>
+      <input type="range" class="lr-slider" id="lr" min="0.001" max="0.1" step="0.001" value="0.03"/>
       <span class="mono-label" style="font-size:8px;white-space:nowrap;">0.100</span>
     </div>
   </div>
@@ -63,24 +63,41 @@
 
 <div class="left-sidebar-grid">
     <section class="left-sidebar" style="font-size: 30px;">Controls
-         <p>Dataset</p>
-         <div style="padding-bottom: 20px;">
-            <div class="divSquare"><img src=img/circle.jpg></div>
-            <div class="divSquare"><img src=img/xor.jpg></div>
-            <div style='clear:both'></div>
-            <div class="divSquare"><img src=img/gaussian.jpg></div>
-            <div class="divSquare"><img src=img/spiral.jpg></div>
-            <div style='clear:both'></div>
-         </div>
+         <select id="datasetSelect" style="display:none;">
+          <option value="circle" selected>Circle</option>
+          <option value="xor">XOR</option>
+          <option value="gaussian">Gaussian</option>
+          <option value="spiral">Spiral</option>
+        </select>
+        <div style="padding-bottom: 20px;">
+        <div class="divSquare dataset-card active" data-dataset="circle">
+          <img src="img/circle.jpg" alt="Circle dataset">
+        </div>
+        <div class="divSquare dataset-card" data-dataset="xor">
+          <img src="img/xor.jpg" alt="XOR dataset">
+        </div>
+        <div style="clear:both"></div>
+
+        <div class="divSquare dataset-card" data-dataset="gaussian">
+          <img src="img/gaussian.jpg" alt="Gaussian dataset">
+        </div>
+        <div class="divSquare dataset-card" data-dataset="spiral">
+          <img src="img/spiral.jpg" alt="Spiral dataset">
+        </div>
+        <div style="clear:both"></div>
+      </div>
          <p>Hidden Neurons <br>
-            <input type="range" class="controls-lr-slider" id="hiddenSlider" min="1" max="8" step="1" value="4"/>         </p>
+         <input type="range" class="controls-lr-slider" id="hidden" min="1" max="8" step="1" value="4"/>
          <p>Train % <br>
-            <input type="range" class="controls-lr-slider" id="trainSlider" min="10" max="90" step="1" value="50"/>         </p>
+         <input type="range" class="controls-lr-slider" id="trainSplit" min="10" max="90" step="5" value="50"/>
+         <span id="trainSplitValue">50%</span>
          <p>Noise <br>
-            <input type="range" class="controls-lr-slider" id="noiseSlider" min="0" max="50" step="1" value="0"/>         </p>
-         <p><input type="checkbox"> Show Training Data</p>
+         <input type="range" class="controls-lr-slider" id="noise" min="0" max="0.5" step="0.01" value="0.08"/>
+         <span id="noiseValue">0.08</span>
+         <p><input type="checkbox" id="showTrainData" checked> Show Training Data</p>
 
          <h2 style="font-size: 30px; padding-top: 20px;">Information</h2>
+         <p id="status">Ready</p>
           <p>Dataset: <span id="infoDataset">Circle</span></p> 
           <p>Hidden: <span id="infoHidden">4</span></p> 
           <p>Train: <span id="infoTrain">50%</span></p>
@@ -96,7 +113,22 @@
         <canvas id="lossPlot" width="320" style="background-color: rgb(155, 164, 172);"></canvas>
     </main>
 </div>
-  <script src="app.js"></script>
-  
+  <script src="app.js">
+  const datasetSelect = document.getElementById('datasetSelect');
+  const datasetCards = document.querySelectorAll('.dataset-card');
+
+  datasetCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const value = card.dataset.dataset;
+
+      datasetSelect.value = value;
+      datasetSelect.dispatchEvent(new Event('change'));
+
+      datasetCards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+    });
+  });
+  </script>
+
 </body>
 </html>
