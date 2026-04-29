@@ -65,7 +65,7 @@ function updateInfo() {
   infoHidden.textContent = hiddenSize;
   infoTrain.textContent = `${trainPercent}%`;
   infoNoise.textContent = noiseLevel.toFixed(2);
-  
+
   // placeholders until training/loss math is wired in
   infoTrainLoss.textContent = "0.00000";
   infoTestLoss.textContent = "0.00000";
